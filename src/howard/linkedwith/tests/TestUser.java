@@ -1,11 +1,11 @@
 /**
  * 
  */
-package howard.linkedwith.tests;
+package tests;
 
 import static org.junit.Assert.*;
-import howard.linkedwith.exceptions.UninitializedObjectException;
-import howard.linkedwith.main.User;
+import exceptions.UninitializedObjectException;
+import main.User;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package howard.linkedwith.main;
+package main;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import howard.linkedwith.exceptions.UninitializedObjectException;
+import exceptions.UninitializedObjectException;
 
 /**
  * Link represents a link of two users in a social network Linked With.

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package howard.linkedwith.tests;
+package tests;
 
 import static org.junit.Assert.*;
 
@@ -12,10 +12,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import howard.linkedwith.exceptions.UninitializedObjectException;
-import howard.linkedwith.main.Link;
-import howard.linkedwith.main.SocialNetworkStatus;
-import howard.linkedwith.main.User;
+import exceptions.UninitializedObjectException;
+import main.Link;
+import main.SocialNetworkStatus;
+import main.User;
 
 import org.junit.Before;
 import org.junit.Test;

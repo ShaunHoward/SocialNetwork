@@ -1,17 +1,12 @@
 /**
  * 
  */
-package howard.linkedwith.main;
+package main;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import howard.linkedwith.exceptions.UninitializedObjectException;
-import howard.linkedwith.main.User;
+import exceptions.UninitializedObjectException;
+import main.User;
 
 /**
  * Social Network represents the collection of all users in the Linked With
@@ -146,9 +141,11 @@ public class SocialNetwork {
 	 * @return the set of users that are friends with this user
 	 * @throws NullPointerException
 	 *             - thrown when arguments are null
+     * @throws exceptions.UninitializedObjectException - thrown when a link
+     * is uninitialized
 	 */
 	public Set<Friend> neighborhood(String id, Date date,
-			SocialNetworkStatus status) throws NullPointerException {
+			SocialNetworkStatus status) throws NullPointerException, UninitializedObjectException {
 		return neighborhood(id, date, userLinks.size(), status);
 	}
 
@@ -168,91 +165,163 @@ public class SocialNetwork {
 	 * @return the set of users that are friends with this user
 	 * @throws NullPointerException
 	 *             - thrown when arguments are null
+     * @throws exceptions.UninitializedObjectException - thrown when a link
+     * is uninitialized
 	 */
 	public Set<Friend> neighborhood(String id, Date date, int distance_max,
-			SocialNetworkStatus status) throws NullPointerException {
+			SocialNetworkStatus status) throws NullPointerException, UninitializedObjectException {
 		LinkedWithUtilities.throwExceptionWhenNull(id, date, status);
 		LinkedWithUtilities.setStatusForInvalidUsers(id, status, userSet);
 
-		Set<Set<User>> userKeySet = new HashSet<Set<User>>();
-		userKeySet.addAll(userLinks.keySet());
-		Set<Friend> friendSet = new HashSet<Friend>();
-
 		// Add users to friend set, including the calling user.
 		if (status.getStatus() != SocialNetworkStatus.Enum.INVALID_USERS) {
-			int distance = 0;
-			User user = getUser(id);
-			addUserToFriendSet(user, friendSet, distance);
-			distance++;
-			friendSet = addFriendsToFriendSet(userKeySet, friendSet, user,
-					distance_max, status);
+			return buildNeighborhood(getUser(id), distance_max);
 		}
-		return friendSet;
+
+		return new HashSet<Friend>();
 	}
 
+    /**
+     * Gets the direct links to the given user.
+     *
+     * @param user - the user to find the direct links to
+     * @param keySet - the key set of the map of user links for the
+     *               social network
+     * @return a list of direct links to the given user
+     */
+    private List<Link> getLinksToUser(User user, Set<Set<User>> keySet) {
+        List<Link> linksToUser = new ArrayList<>();
+        List<Set<User>> setsToRemove = new ArrayList<>();
+
+        /*
+         * Gather all the links to this user by finding each set the
+         * user is in and finding the link associated with that user set in
+         * the user links map.
+         *
+         * Add the user set associated with the link to the list of sets to remove.
+         */
+        for (Set<User> userSet : keySet) {
+            if (userSet.contains(user)) {
+                linksToUser.add(userLinks.get(userSet));
+                setsToRemove.add(userSet);
+            }
+        }
+
+        /*
+         * Remove all the sets to remove from the user link's map key set so
+         * they are not processed again.
+         */
+        for (Set<User> userSet : setsToRemove) {
+            if (keySet.contains(userSet)) {
+                keySet.remove(userSet);
+            }
+        }
+
+        return linksToUser;
+    }
+
+    /**
+     * Gets the users directly linked to the given user based on the
+     * given list of direct links to the user.
+     *
+     * @param user - the user to find the users closest to
+     * @param linksToUser - the direct links to the user
+     * @return the users closest to the given user
+     * @throws UninitializedObjectException - thrown when a link is
+     * uninitialized
+     */
+    private List<User> getLinkedUsers(User user, List<Link> linksToUser) throws UninitializedObjectException {
+        List<Set<User>> setsOfLinkedUsers = new ArrayList<>();
+        List<User> linkedUsers = new ArrayList<>();
+
+        /*
+         * For each link in the links to this user, add the set of users associated in the
+         * link to the list of sets of linked users.
+         */
+        for (Link link : linksToUser){
+            setsOfLinkedUsers.add(link.getUsers());
+        }
+
+        /*
+         * For each set of users associated with a link, remove this user and
+         * add the other user to a list of users linked to this user.
+         */
+        for (Set<User> userSet : setsOfLinkedUsers){
+            userSet.remove(user);
+            linkedUsers.add(userSet.iterator().next());
+        }
+
+        return linkedUsers;
+    }
+
+    private Set<Friend> buildNeighborhood(User user, int distance_max) throws UninitializedObjectException {
+        Set<Set<User>> keySet = new HashSet<>();
+        keySet.addAll(userLinks.keySet());
+
+        Queue<Map<User, Integer>> userQ = new LinkedList<>();
+
+        int distance = 0;
+
+        List<Link> linksToUser;
+
+        List<User> linkedUsers;
+
+        Set<Friend> neighborhood = new HashSet<>();
+
+        Map<User, Integer> userAndDistanceMap = new HashMap<>();
+
+        addUserToNeighborhood(user, neighborhood, distance);
+
+        userQ.add(userAndDistanceMap);
+
+        userAndDistanceMap.put(user, distance);
+
+        distance++;
+
+        /* Perform breadth-first search while users exist in the queue. */
+        while (!userQ.isEmpty()) {
+
+            /* When the state is the goal state, leave search loop. */
+            if (distance >= distance_max) {
+            /* Set goal to current state, if it is the goal state. */
+                return neighborhood;
+            }
+
+            /* Poll the queue to get the next user at end of queue. */
+            userAndDistanceMap = userQ.poll();
+
+            linksToUser = getLinksToUser(user, keySet);
+            linkedUsers = getLinkedUsers(user, linksToUser);
+            userAndDistanceMap.remove(user);
+
+            if (!linkedUsers.isEmpty()) {
+                for (User linkedUser : linkedUsers) {
+                    addUserToNeighborhood(linkedUser, neighborhood, distance);
+                    userAndDistanceMap.put(linkedUser, distance);
+                }
+            }
+
+            distance++;
+        }
+
+        return neighborhood;
+    }
+
 	/**
-	 * Adds the friends of this user to the friend set.
-	 * 
-	 * @param userKeySet
-	 *            - the set of users linked in this social network
-	 * @param friendSet
-	 *            - the set of friends of this user
-	 * @param user
-	 *            - the user
-	 * @param distance_max
-	 *            - the max distance of friends
-	 * @param status
-	 *            - the status of this operation
-	 * @return the friend set of this user
-	 */
-	private Set<Friend> addFriendsToFriendSet(Set<Set<User>> userKeySet,
-			Set<Friend> friendSet, User user, int distance_max,
-			SocialNetworkStatus status) {
-
-		Iterator<Set<User>> userLinksIter = userLinks.keySet().iterator();
-		Set<User> iter;
-		int distance = 1;
-		// Iterate through friends while there are more friends connected to the
-		// input user's friends.
-		while (!userKeySet.isEmpty() && distance <= distance_max) {
-			iter = userLinksIter.next();
-			// Find all friends connected to this friend and add to friends set.
-			while (userLinksIter.hasNext()) {
-
-				// When this set contains a friend of the user, get the other
-				// friend and add them to
-				// the friend set.
-				if (iter.contains(user)) {
-					iter.remove(user);
-					user = iter.iterator().next();
-					addUserToFriendSet(user, friendSet, distance);
-					userKeySet.remove(userLinksIter);
-				}
-
-				userLinksIter.remove();
-			}
-			distance++;
-		}
-		status.setStatus(SocialNetworkStatus.Enum.SUCCESS);
-
-		return friendSet;
-	}
-
-	/**
-	 * Adds the given user to the friend set at the given distance.
+	 * Adds the given user to the neighborhood at the given distance.
 	 * 
 	 * @param user
-	 *            - user to add to friend set
-	 * @param friendSet
-	 *            - the friend set to add user to
+	 *            - user to add to the neighborhood
+	 * @param neighborhood
+	 *            - the neighborhood to add the user to
 	 * @param distance
 	 *            - the distance of this friend
 	 */
-	private void addUserToFriendSet(User user, Set<Friend> friendSet,
+	private void addUserToNeighborhood(User user, Set<Friend> neighborhood,
 			int distance) {
 		Friend friend = new Friend();
 		friend.set(user, distance);
-		friendSet.add(friend);
+		neighborhood.add(friend);
 	}
 
 	/**
@@ -471,7 +540,8 @@ public class SocialNetwork {
 		// Iterate through set of user IDs.
 		for (String id : ids) {
 			// Check for each user id in the user set of this social network.
-			USER_SET_LOOP: for (User user : userSet) {
+			USER_SET_LOOP:
+            for (User user : userSet) {
 				// When user's id is the same as id in the input set, add user
 				// to new user set.
 				if (user.getID().equals(id)) {

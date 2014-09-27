@@ -1,7 +1,7 @@
 /**
  * 
  */
-package howard.linkedwith.exceptions;
+package exceptions;
 
 /**
  * An UninitializedObjectException represents an exception caused in 

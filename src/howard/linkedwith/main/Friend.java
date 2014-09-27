@@ -1,9 +1,9 @@
 /**
  * 
  */
-package howard.linkedwith.main;
+package main;
 
-import howard.linkedwith.exceptions.UninitializedObjectException;
+import exceptions.UninitializedObjectException;
 
 /**
  * Friend class of the social network project for EECS 293.
@@ -77,7 +77,7 @@ public class Friend {
 		if (!isValid){
 			return "Invalid Friend";
 		} else {
-			return "Friend " + user.getFirstName() + " " + user.getLastName() + " who is " + distance + " links away.";
+			return "Friend " + user.getID() + " who is " + distance + " links away.";
 		}
 	}
 }

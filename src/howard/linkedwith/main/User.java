@@ -1,9 +1,9 @@
 /**
  * 
  */
-package howard.linkedwith.main;
+package main;
 
-import howard.linkedwith.exceptions.UninitializedObjectException;
+import exceptions.UninitializedObjectException;
 
 /**
  * User represents a user of a social network Linked With.

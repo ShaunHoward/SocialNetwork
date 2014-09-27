@@ -1,7 +1,7 @@
 /**
  * 
  */
-package howard.linkedwith.main;
+package main;
 
 /**
  * The social network status of the social network.

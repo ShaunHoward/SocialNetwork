@@ -1,7 +1,7 @@
 /**
  * 
  */
-package howard.linkedwith.tests;
+package tests;
 
 import static org.junit.Assert.*;
 
@@ -11,10 +11,10 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import howard.linkedwith.main.Friend;
-import howard.linkedwith.main.SocialNetwork;
-import howard.linkedwith.main.SocialNetworkStatus;
-import howard.linkedwith.main.User;
+import main.Friend;
+import main.SocialNetwork;
+import main.SocialNetworkStatus;
+import main.User;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -116,17 +116,17 @@ public class TestSocialNetwork {
 	
 	@Test
 	public void testNeighborhood() {
-		Set<Friend> friendSet = new HashSet<>();
-		
+		Set<Friend> expectedSet = new HashSet<>();
+        Set<Friend> actualSet;
 		Friend friend1 = new Friend();
 		friend1.set(user1, 0);
-		friendSet.add(friend1);
+		expectedSet.add(friend1);
 		Friend friend2 = new Friend();
 		friend2.set(user2, 1);
-		friendSet.add(friend2);
+		expectedSet.add(friend2);
 		Friend friend3 = new Friend();
-		friend2.set(user3, 2);
-		friendSet.add(friend3);
+		friend3.set(user3, 2);
+		expectedSet.add(friend3);
 		
 		testNetwork.addUser(user1);
 		testNetwork.addUser(user2);
@@ -141,8 +141,9 @@ public class TestSocialNetwork {
 		
 		testNetwork.establishLink(userIds1,  date1, status);
 		testNetwork.establishLink(userIds2, date1, status);
+        actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
 		
-		assertEquals(friendSet, testNetwork.neighborhood(user1.getID(), date2, status));
+		assertEquals(expectedSet, actualSet);
 		assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
 	}
 

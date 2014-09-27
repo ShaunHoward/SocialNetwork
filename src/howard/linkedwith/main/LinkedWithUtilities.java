@@ -1,11 +1,11 @@
 /**
  * 
  */
-package howard.linkedwith.main;
+package main;
 
 import java.util.Set;
 
-import howard.linkedwith.exceptions.UninitializedObjectException;
+import exceptions.UninitializedObjectException;
 
 /**
  * Helper class for the linked with social network.
@@ -75,17 +75,25 @@ public class LinkedWithUtilities {
 	}
 	
 	/**
-	 * Checks if the input user id is empty or is not contained in the given user set.
-	 * Sets invalid user status when either is true.
+	 * Checks if the input user id is within the given user set.
+	 * Sets invalid user status when user is not in set.
 	 * 
-	 * @param id - the user id to check for absence
+	 * @param id - the user id to look for in user set
 	 * @param status - the social network status
 	 * @param userSet - the user set to check for containment
 	 */
 	static void setStatusForInvalidUsers(String id, SocialNetworkStatus status, Set<User> userSet){
-		User user = new User();
-		user.setID(id);
-		if (id.length() == 0 || !userSet.contains(user)){
+		boolean userInSet = false;
+
+        USER_SEARCH_LOOP:
+        for (User user : userSet){
+            if (user.getID().equals(id)){
+                userInSet = true;
+                break USER_SEARCH_LOOP;
+            }
+        }
+
+		if (!userInSet){
 			status.setStatus(SocialNetworkStatus.Enum.INVALID_USERS);
 		}
 	}
