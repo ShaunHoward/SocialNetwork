@@ -332,6 +332,9 @@ public class SocialNetwork {
 
         User currUser;
 
+        //Determine all the users connected at the given distance,
+        //add them to the neighborhood, and add to the set of connected
+        //users for further association searching.
         while(userIter.hasNext()) {
             currUser = userIter.next();
 
@@ -343,6 +346,8 @@ public class SocialNetwork {
             //so they are not processed again.
             connectedUsers.remove(currUser);
 
+            //Add the users connected to the current user to the
+            //neighborhood of friends.
             if (!linkedUsers.isEmpty()) {
                 for (User linkedUser : linkedUsers) {
                     addUserToNeighborhood(linkedUser, neighborhood, distance);
