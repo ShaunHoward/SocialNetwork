@@ -69,7 +69,7 @@ public class LinkedWithUtilities {
 	 * @param status - the social network status to set based on this evaluation
 	 */
 	static void setInvalidUsersStatusIfSetSizeUnequal(Set<User> users, Set<String> ids, SocialNetworkStatus status){	
-		if (users.size() != ids.size()) {
+		if (users.size() != ids.size() || users.size() > 2) {
 			status.setStatus(SocialNetworkStatus.Enum.INVALID_USERS);
 		}
 	}
@@ -82,7 +82,7 @@ public class LinkedWithUtilities {
 	 * @param status - the social network status
 	 * @param userSet - the user set to check for containment
 	 */
-	static void setStatusForInvalidUsers(String id, SocialNetworkStatus status, Set<User> userSet){
+	static void setStatusForInvalidUsers(String id, Set<User> userSet, SocialNetworkStatus status){
 		boolean userInSet = false;
 
         USER_SEARCH_LOOP:
@@ -97,5 +97,18 @@ public class LinkedWithUtilities {
 			status.setStatus(SocialNetworkStatus.Enum.INVALID_USERS);
 		}
 	}
+
+    /**
+     * Checks if the input distance is negative and sets the status to recognize
+     * if this is the case.
+     *
+     * @param distance - the distance to check for negativity
+     * @param status - the status of the operation
+     */
+    static void setStatusForNegativeDistance(int distance, SocialNetworkStatus status){
+        if (distance < 0) {
+            status.setStatus(SocialNetworkStatus.Enum.INVALID_DISTANCE);
+        }
+    }
 
 }

@@ -529,10 +529,8 @@ public class Link {
 	 * 
 	 * @param date
 	 *            - the date to check
-	 * @param status
-	 *            - the status of the operation
-	 * @param establishment
-	 * @return
+	 * @param establishment - whether the link is trying to establish
+	 * @return whether the link can be changed based on current state
 	 */
 	private boolean manageLink(Date date, boolean establishment) {
 

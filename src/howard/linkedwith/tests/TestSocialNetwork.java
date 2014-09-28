@@ -9,8 +9,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
+import exceptions.UninitializedObjectException;
 import main.Friend;
 import main.SocialNetwork;
 import main.SocialNetworkStatus;
@@ -29,7 +31,7 @@ public class TestSocialNetwork {
 	// Objects to use throughout tests.
 	private SocialNetwork testNetwork;
 	private SocialNetworkStatus status;
-	private User user1, user2, user3;
+	private User user1, user2, user3, user4, user5;
 	private Set<User> testUsersGood;
 	private Set<User> testUsersBad;
 	private Set<String> testUserIDs;
@@ -69,6 +71,12 @@ public class TestSocialNetwork {
 		user3.setID("BillyBob");
 		testUsersBad.add(user3);
 		testUserIDs.add("BillyBob");
+
+        user4 = new User();
+        user4.setID("JohnSmith");
+
+        user5 = new User();
+        user5.setID("TimBurton");
 		
 		date1 = sdf.parse("1/1/2014");
 		date2 = sdf.parse("2/1/2014");
@@ -115,15 +123,18 @@ public class TestSocialNetwork {
 	}
 	
 	@Test
-	public void testNeighborhood() {
+	public void testNeighborhoodSmall() {
 		Set<Friend> expectedSet = new HashSet<>();
-        Set<Friend> actualSet;
+        Set<Friend> actualSet = null;
+
 		Friend friend1 = new Friend();
 		friend1.set(user1, 0);
 		expectedSet.add(friend1);
+
 		Friend friend2 = new Friend();
 		friend2.set(user2, 1);
 		expectedSet.add(friend2);
+
 		Friend friend3 = new Friend();
 		friend3.set(user3, 2);
 		expectedSet.add(friend3);
@@ -141,11 +152,73 @@ public class TestSocialNetwork {
 		
 		testNetwork.establishLink(userIds1,  date1, status);
 		testNetwork.establishLink(userIds2, date1, status);
-        actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
-		
-		assertEquals(expectedSet, actualSet);
+        try {
+            actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
+        } catch (UninitializedObjectException e) {
+        }
+
+        assertEquals(expectedSet, actualSet);
 		assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
 	}
+
+    @Test
+    public void testNeighborhoodMedium() {
+        Set<Friend> expectedSet = new HashSet<>();
+        Set<Friend> actualSet = null;
+
+        Friend friend1 = new Friend();
+        friend1.set(user1, 0);
+        expectedSet.add(friend1);
+
+        Friend friend2 = new Friend();
+        friend2.set(user2, 1);
+        expectedSet.add(friend2);
+
+        Friend friend3 = new Friend();
+        friend3.set(user3, 2);
+        expectedSet.add(friend3);
+
+        Friend friend4 = new Friend();
+        friend4.set(user4, 2);
+        expectedSet.add(friend4);
+
+        Friend friend5 = new Friend();
+        friend5.set(user5, 3);
+        expectedSet.add(friend5);
+
+        testNetwork.addUser(user1);
+        testNetwork.addUser(user2);
+        testNetwork.addUser(user3);
+        testNetwork.addUser(user4);
+        testNetwork.addUser(user5);
+
+        Set<String> userIds1 = new HashSet<String>();
+        userIds1.add(user1.getID());
+        userIds1.add(user2.getID());
+        Set<String> userIds2 = new HashSet<String>();
+        userIds2.add(user2.getID());
+        userIds2.add(user3.getID());
+        Set<String> userIds3 = new HashSet<String>();
+        userIds3.add(user2.getID());
+        userIds3.add(user4.getID());
+        Set<String> userIds4 = new HashSet<String>();
+        userIds4.add(user4.getID());
+        userIds4.add(user5.getID());
+
+
+        testNetwork.establishLink(userIds1,  date1, status);
+        testNetwork.establishLink(userIds2, date1, status);
+        testNetwork.establishLink(userIds3, date1, status);
+        testNetwork.establishLink(userIds4, date1, status);
+
+        try {
+            actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
+        } catch (UninitializedObjectException e) {
+        }
+
+        assertEquals(expectedSet, actualSet);
+        assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+    }
 
 	@Test
 	public void testEstablishLink() {

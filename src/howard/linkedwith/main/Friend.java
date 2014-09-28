@@ -80,4 +80,45 @@ public class Friend {
 			return "Friend " + user.getID() + " who is " + distance + " links away.";
 		}
 	}
+
+    /**
+     * Override the equals method of Object for this Friend implementation.
+     * Compares two friends by their user objects. Returns true if two user objects
+     * are equivalent.
+     */
+    @Override
+    public boolean equals(Object object) {
+        boolean result = false;
+
+        if (LinkedWithUtilities.returnTrueWhenNull(object)
+                || object.getClass() != this.getClass()) {
+            result = false;
+        } else {
+            Friend friend = (Friend) object;
+
+            try {
+                if (this.user.getID().equals(friend.getUser().getID())) {
+                    result = true;
+                }
+            } catch (UninitializedObjectException e) {
+                result = false;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Override the hash code method of Object for this Friend implementation.
+     * Hash code is determined from the hash code of the user object's ID and
+     * from the distance of the friend.
+     *
+     * @return the hash code of this friend
+     */
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 23 * hash + (this.user.getID() != null ? this.user.getID().hashCode() : 0);
+        hash = 23 * hash + this.distance;
+        return hash;
+    }
 }
