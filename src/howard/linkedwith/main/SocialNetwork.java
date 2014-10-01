@@ -364,13 +364,7 @@ public class SocialNetwork {
         //Set of users directly connected to the given user.
         Set<User> connectedUsers = new HashSet<>();
 
-        //Add this calling user to the neighborhood at distance 0.
-        addUserToNeighborhood(user, neighborhood, distance);
-
-        //Add the calling user to the set of connected users.
-        connectedUsers.add(user);
-
-        //Make a method that adds user to neighborhood and to the connected users list.
+        connectUserWithNeighborhood(user, distance, neighborhood, connectedUsers);
 
         distance++;
 
@@ -391,6 +385,25 @@ public class SocialNetwork {
         }
 
         return neighborhood;
+    }
+
+    /**
+     * Adds the user to the neighborhood at the given distance and
+     * adds the user to the set of connected users.
+     *
+     * @param user - the user to connect with the neighborhood
+     * @param distance - the distance of the user in the neighborhood
+     * @param neighborhood - the neighborhood to add the user to
+     * @param connectedUsers - the set of connected users in the neighborhood
+     */
+    private void connectUserWithNeighborhood(User user, int distance, Set<Friend> neighborhood,
+                                             Set<User> connectedUsers) {
+
+        //Add the user to the neighborhood at the given distance.
+        addUserToNeighborhood(user, neighborhood, distance);
+
+        //Add the given user to the set of connected users.
+        connectedUsers.add(user);
     }
 
     /**
@@ -445,13 +458,13 @@ public class SocialNetwork {
             connectedUsers.remove(currUser);
 
             /*
-             * Add the users connected to the current user to the
+             * Connect the users associated with the current user to the
              * neighborhood of friends.
              */
             if (!linkedUsers.isEmpty()) {
                 for (User linkedUser : linkedUsers) {
-                    addUserToNeighborhood(linkedUser, neighborhood, distance);
-                    connectedUsers.add(linkedUser);
+                    connectUserWithNeighborhood(linkedUser, distance,
+                            neighborhood, connectedUsers);
                 }
             }
         }
