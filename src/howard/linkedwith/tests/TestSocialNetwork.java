@@ -34,7 +34,7 @@ public class TestSocialNetwork {
 	private Set<String> testUserIDs;
 	private Set<String> testTwoUserIDs;
 	private	static SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-	private Date date1, date2;
+	private Date date1, date2, date3;
 
 	/**
 	 * Set up objects before tests.
@@ -77,6 +77,7 @@ public class TestSocialNetwork {
 		
 		date1 = sdf.parse("1/1/2014");
 		date2 = sdf.parse("2/1/2014");
+        date3 = sdf.parse("3/1/2014");
 	}
 
 	@Test
@@ -146,10 +147,10 @@ public class TestSocialNetwork {
 		userIds1.add(user2.getID());
 		userIds2.add(user2.getID());
 		userIds2.add(user3.getID());
-		
-		testNetwork.establishLink(userIds1,  date1, status);
-		testNetwork.establishLink(userIds2, date1, status);
+
         try {
+            testNetwork.establishLink(userIds1,  date1, status);
+            testNetwork.establishLink(userIds2, date1, status);
             actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
         } catch (UninitializedObjectException e) {
         }
@@ -202,14 +203,11 @@ public class TestSocialNetwork {
         userIds4.add(user4.getID());
         userIds4.add(user5.getID());
 
-
-        testNetwork.establishLink(userIds1,  date1, status);
-        testNetwork.establishLink(userIds2, date1, status);
-        testNetwork.establishLink(userIds3, date1, status);
-        testNetwork.establishLink(userIds4, date1, status);
-
-
         try {
+            testNetwork.establishLink(userIds1,  date1, status);
+            testNetwork.establishLink(userIds2, date1, status);
+            testNetwork.establishLink(userIds3, date1, status);
+            testNetwork.establishLink(userIds4, date1, status);
             actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
         } catch (UninitializedObjectException e) {
         }
@@ -244,13 +242,14 @@ public class TestSocialNetwork {
         userIds2.add(user2.getID());
         userIds2.add(user3.getID());
 
-        testNetwork.establishLink(userIds1,  date1, status);
 
-        testNetwork.tearDownLink(userIds1, date2, status);
-
-        testNetwork.establishLink(userIds2, date1, status);
 
         try {
+            testNetwork.establishLink(userIds1,  date1, status);
+
+            testNetwork.tearDownLink(userIds1, date2, status);
+
+            testNetwork.establishLink(userIds2, date1, status);
             actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
         } catch (UninitializedObjectException e) {
         }
@@ -301,16 +300,17 @@ public class TestSocialNetwork {
         userIds4.add(user4.getID());
         userIds4.add(user5.getID());
 
-        testNetwork.establishLink(userIds1,  date1, status);
-        testNetwork.establishLink(userIds2, date1, status);
-        testNetwork.establishLink(userIds3, date1, status);
 
-        testNetwork.tearDownLink(userIds3, date2, status);
-
-        testNetwork.establishLink(userIds4, date1, status);
 
 
         try {
+            testNetwork.establishLink(userIds1,  date1, status);
+            testNetwork.establishLink(userIds2, date1, status);
+            testNetwork.establishLink(userIds3, date1, status);
+
+            testNetwork.tearDownLink(userIds3, date2, status);
+
+            testNetwork.establishLink(userIds4, date1, status);
             actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
         } catch (UninitializedObjectException e) {
         }
@@ -346,14 +346,15 @@ public class TestSocialNetwork {
         userIds2.add(user2.getID());
         userIds2.add(user3.getID());
 
-        testNetwork.establishLink(userIds1,  date1, status);
-        testNetwork.establishLink(userIds2, date1, status);
-        testNetwork.tearDownLink(userIds2, date2, status);
+
 
         expectedNeighborhoodTrend.put(date1, 3);
-        expectedNeighborhoodTrend.put(date2, 2);
+        expectedNeighborhoodTrend.put(date2, 1);
 
         try {
+            testNetwork.establishLink(userIds1,  date1, status);
+            testNetwork.establishLink(userIds2, date1, status);
+            testNetwork.tearDownLink(userIds2, date2, status);
             actualNeighborhoodTrend = testNetwork.neighborhoodTrend(user1.getID(), status);
         } catch (UninitializedObjectException e) {
         }
@@ -364,28 +365,24 @@ public class TestSocialNetwork {
 
     @Test
     public void testMediumNeighborhoodTrend() {
-        Set<Friend> expectedSet = new HashSet<>();
-        Set<Friend> actualSet = null;
+
+        Map<Date, Integer> expectedNeighborhoodTrend = new HashMap<>();
+        Map<Date, Integer> actualNeighborhoodTrend = null;
 
         Friend friend1 = new Friend();
         friend1.set(user1, 0);
-        expectedSet.add(friend1);
 
         Friend friend2 = new Friend();
         friend2.set(user2, 1);
-        expectedSet.add(friend2);
 
         Friend friend3 = new Friend();
         friend3.set(user3, 2);
-        expectedSet.add(friend3);
 
         Friend friend4 = new Friend();
         friend4.set(user4, 2);
-        expectedSet.add(friend4);
 
         Friend friend5 = new Friend();
         friend5.set(user5, 3);
-        expectedSet.add(friend5);
 
         testNetwork.addUser(user1);
         testNetwork.addUser(user2);
@@ -406,19 +403,25 @@ public class TestSocialNetwork {
         userIds4.add(user4.getID());
         userIds4.add(user5.getID());
 
-
-        testNetwork.establishLink(userIds1,  date1, status);
-        testNetwork.establishLink(userIds2, date1, status);
-        testNetwork.establishLink(userIds3, date1, status);
-        testNetwork.establishLink(userIds4, date1, status);
-
+        expectedNeighborhoodTrend.put(date1, 4);
+        expectedNeighborhoodTrend.put(date2, 1);
+        expectedNeighborhoodTrend.put(date3, 1);
 
         try {
-            actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
+            testNetwork.establishLink(userIds1,  date1, status);
+            testNetwork.establishLink(userIds2, date1, status);
+            testNetwork.establishLink(userIds3, date1, status);
+            testNetwork.establishLink(userIds4, date1, status);
+
+            testNetwork.tearDownLink(userIds2, date2, status);
+
+            testNetwork.establishLink(userIds2, date3, status);
+            testNetwork.tearDownLink(userIds3, date3, status);
+            actualNeighborhoodTrend = testNetwork.neighborhoodTrend(user1.getID(), status);
         } catch (UninitializedObjectException e) {
         }
 
-        assertEquals(expectedSet, actualSet);
+        assertEquals(expectedNeighborhoodTrend, actualNeighborhoodTrend);
         assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
     }
 
@@ -426,9 +429,12 @@ public class TestSocialNetwork {
 	public void testEstablishLink() {
 		testNetwork.addUser(user1);
 		testNetwork.addUser(user2);
-		
-		testNetwork.establishLink(testTwoUserIDs, date1, status);
-		assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+
+        try {
+            testNetwork.establishLink(testTwoUserIDs, date1, status);
+        } catch (UninitializedObjectException e) {
+        }
+        assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
 	}
 	
 	@Test
@@ -437,44 +443,59 @@ public class TestSocialNetwork {
 		testNetwork.addUser(user2);
 		testNetwork.addUser(user3);
 
-		testNetwork.establishLink(testUserIDs, date1, status);
-		assertEquals(SocialNetworkStatus.Enum.INVALID_USERS, status.getStatus());
+        try {
+            testNetwork.establishLink(testUserIDs, date1, status);
+        } catch (UninitializedObjectException e) {
+        }
+        assertEquals(SocialNetworkStatus.Enum.INVALID_USERS, status.getStatus());
 	}
 	
 	@Test(expected=NullPointerException.class)
 	public void testNullEstablishLink() {
-		testNetwork.establishLink(null, null, status);
-	}
+        try {
+            testNetwork.establishLink(null, null, status);
+        } catch (UninitializedObjectException e) {
+        }
+    }
 	
 	@Test
 	public void testAlreadyEstablishedLink() {
 		testNetwork.addUser(user1);
 		testNetwork.addUser(user2);
-		
-		testNetwork.establishLink(testTwoUserIDs, date1, status);
-		assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
-		
-		testNetwork.establishLink(testTwoUserIDs, date1, status);
-		assertEquals(SocialNetworkStatus.Enum.INVALID_USERS, status.getStatus());
+
+        try {
+            testNetwork.establishLink(testTwoUserIDs, date1, status);
+            assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+
+            testNetwork.establishLink(testTwoUserIDs, date1, status);
+            assertEquals(SocialNetworkStatus.Enum.INVALID_USERS, status.getStatus());
+        } catch (UninitializedObjectException e) {
+        }
 	}
 
 	@Test
 	public void testTearDownLink() {
 		testNetwork.addUser(user1);
 		testNetwork.addUser(user2);
-		
-		testNetwork.establishLink(testTwoUserIDs, date1, status);
-		assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
-		testNetwork.tearDownLink(testTwoUserIDs, date2, status);
-		assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
-		testNetwork.tearDownLink(testTwoUserIDs, date1, status);
-		assertEquals(SocialNetworkStatus.Enum.INVALID_DATE, status.getStatus());
+
+        try {
+            testNetwork.establishLink(testTwoUserIDs, date1, status);
+            assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+            testNetwork.tearDownLink(testTwoUserIDs, date2, status);
+            assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+            testNetwork.tearDownLink(testTwoUserIDs, date1, status);
+            assertEquals(SocialNetworkStatus.Enum.INVALID_DATE, status.getStatus());
+        } catch (UninitializedObjectException e) {
+        }
 	}
 	
 	@Test(expected=NullPointerException.class)
 	public void testNullTearDownLink() {
-		testNetwork.tearDownLink(null, null, status);
-	}
+        try {
+            testNetwork.tearDownLink(null, null, status);
+        } catch (UninitializedObjectException e) {
+        }
+    }
 
 	@Test
 	public void testIsActive() {
@@ -482,13 +503,19 @@ public class TestSocialNetwork {
 		
 		testNetwork.addUser(user1);
 		testNetwork.addUser(user2);
-		
-		testNetwork.establishLink(testTwoUserIDs, date1, status);
-		assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+
+        try {
+            testNetwork.establishLink(testTwoUserIDs, date1, status);
+        } catch (UninitializedObjectException e) {
+        }
+        assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
 		assertTrue(testNetwork.isActive(testTwoUserIDs, date1));
-		
-		testNetwork.tearDownLink(testTwoUserIDs, date2, status);
-		assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+
+        try {
+            testNetwork.tearDownLink(testTwoUserIDs, date2, status);
+        } catch (UninitializedObjectException e) {
+        }
+        assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
 		assertFalse(testNetwork.isActive(testTwoUserIDs, date2));
 	}
 

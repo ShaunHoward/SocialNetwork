@@ -24,6 +24,9 @@ public class SocialNetwork {
     // Table of the neighborhood trends for each unique user id.
     Hashtable<String, Map<Date, Integer>> neighborhoodTrends;
 
+    // Set of event dates for the links in this social network.
+    Set<Date> eventDates;
+
 	/**
 	 * Constructor to create a social network without any users.
 	 */
@@ -31,6 +34,7 @@ public class SocialNetwork {
 		this.userSet = new HashSet<>();
 		this.userLinks = new HashMap<>();
         this.neighborhoodTrends = new Hashtable<>();
+        this.eventDates = new HashSet<>();
 	}
 
 	/**
@@ -132,13 +136,13 @@ public class SocialNetwork {
 
     /**
      * Detects the trending users of this social network based on the
-     * dates of when the input user's neighborhood changed and the
+     * dates of when the links in the social network changed and the
      * size of the user's neighborhood at that time.
      *
      * @param id - the id of the user to find the neighborhood trend of
      * @param status - the social network status of the operation
      * @return a map of the sizes of the input user's neighborhood
-     * at given dates
+     * at given link event dates
      * @throws exceptions.UninitializedObjectException - thrown when a link
      * is uninitialized
      */
@@ -146,30 +150,17 @@ public class SocialNetwork {
             throws UninitializedObjectException {
         Map<Date, Integer> neighborhoodTrend = new HashMap<>();
 
-        // The key set of the user links map.
-        Set<Set<User>> keySet = userLinks.keySet();
-        List<Link> linkList = new ArrayList<>();
-        Link linkToAdd;
-
         LinkedWithUtilities.setStatusForInvalidUsers(id, userSet, status);
 
         /*
          * Find all links to user, find events of those links,
          * check neighborhood size upon each date of event,
          * add size and date to map associated with user.
+         * Then get the updated neighborhood trend of this user.
          */
         if(status.getStatus() != SocialNetworkStatus.Enum.INVALID_USERS){
-
-            User user = getUser(id);
-
-            for(Set<User> userSet : keySet){
-                if (userSet.contains(user)){
-                    linkToAdd = userLinks.get(userSet);
-                    linkList.add(linkToAdd);
-                }
-            }
-
-            updateNeighborhoodTrendForUser(id, linkList, status);
+            updateNeighborhoodTrendForUser(id, status);
+            neighborhoodTrend = neighborhoodTrends.get(id);
             status.setStatus(SocialNetworkStatus.Enum.SUCCESS);
         }
 
@@ -238,45 +229,34 @@ public class SocialNetwork {
     /**
      * Updates the neighborhood trend for the given user id by checking
      * the neighborhood size at the dates of events of links in the
-     * given link list and adding them to the neighborhood trend map.
+     * social network and adding them to the neighborhood trend map.
      *
      * @param id - the unique user id to update the trend for
-     * @param linkList - the list of links associated directly with the user
      * @param status - the status of the neighborhood update
      */
-    private void updateNeighborhoodTrendForUser(String id, List<Link> linkList,
-                                                SocialNetworkStatus status) throws UninitializedObjectException {
-        Map<Date, Integer> neighborhoodTrend;
-        Set<Date> linkEventDates = new HashSet<>();
+    private void updateNeighborhoodTrendForUser(String id, SocialNetworkStatus status)
+            throws UninitializedObjectException {
+        Map<Date, Integer> neighborhoodTrend = getNeighborhoodTrendForUser(id);
+        Set<Friend> neighborhoodAtDate;
         int neighborhoodSizeAtDate;
 
         /*
-         * Iterate through the links and the dates of
-         * events of those links, adding to a hash set
-         * to disregard duplicate entries.
-         */
-        for (Link link: linkList){
-            for (Date date : link.getDates()){
-               linkEventDates.add(date);
-            }
-        }
-
-        neighborhoodTrend = getNeighborhoodTrendForUser(id);
-
-        /*
-         * Iterate through dates and put the neighborhood size at that date in
+         * Iterate through dates of events for this social network
+         * and put the neighborhood size at that date in
          * the neighborhood trend for this user.
          */
-        for (Date date : linkEventDates){
-            neighborhoodSizeAtDate = neighborhood(id, date, status).size();
+        for (Date date : eventDates){
+            neighborhoodAtDate = neighborhood(id, date, status);
+            neighborhoodSizeAtDate = neighborhoodAtDate.size();
             neighborhoodTrend.put(date, neighborhoodSizeAtDate);
         }
     }
 
     /**
      * Gets the neighborhood trend for the given user id.
-     * Creates one and puts it in the neighborhood trend
-     * map if one does not exist for the given user.
+     * If one does not exist for the given user, it will
+     * be created and put in the neighborhood trend
+     * map.
      *
      * @param id - the user to get the neighborhood trend of
      * @return the neighborhood trend map for the user
@@ -323,7 +303,7 @@ public class SocialNetwork {
         for (Set<User> userSet : keySet) {
             if (userSet.contains(user)) {
                 linkToAdd = userLinks.get(userSet);
-                addActiveLinkToSet(date, linkToAdd, linksToUser);
+                addActiveLinkToList(date, linkToAdd, linksToUser);
                 setsToRemove.add(userSet);
             }
         }
@@ -344,7 +324,7 @@ public class SocialNetwork {
     }
 
     /**
-     * Adds an active link to the given set of links.
+     * Adds an active link to the given list of links.
      * When a link is inactive, nothing happens.
      *
      * @param date - date to check link activity on
@@ -354,7 +334,7 @@ public class SocialNetwork {
      * @throws exceptions.UninitializedObjectException - thrown when a link is
      * uninitialized
      */
-    private void addActiveLinkToSet(Date date, Link linkToAdd, List<Link> links)
+    private void addActiveLinkToList(Date date, Link linkToAdd, List<Link> links)
             throws UninitializedObjectException {
         if (linkToAdd.isActive(date)) {
             links.add(linkToAdd);
@@ -561,9 +541,10 @@ public class SocialNetwork {
 	 * 
 	 * @throws NullPointerException
 	 *             - thrown when input is null
+     * @throws exceptions.UninitializedObjectException - thrown when link is uninitialized
 	 */
 	public void establishLink(Set<String> ids, Date date,
-			SocialNetworkStatus status) throws NullPointerException {
+			SocialNetworkStatus status) throws NullPointerException, UninitializedObjectException {
 		changeLink(ids, date, status, true);
 	}
 
@@ -578,9 +559,10 @@ public class SocialNetwork {
 	 *            - the status of the social network operation
 	 * @param establishment
 	 *            - whether establishing link
+     * @throws exceptions.UninitializedObjectException - thrown when a link is uninitialized
 	 */
 	private void changeLink(Set<String> ids, Date date,
-			SocialNetworkStatus status, boolean establishment) {
+			SocialNetworkStatus status, boolean establishment) throws UninitializedObjectException {
 		Link link = new Link();
 		Set<User> users = new HashSet<User>();
 
@@ -593,8 +575,9 @@ public class SocialNetwork {
 				status);
 
 		// The link should not already be established between these users.
-		if (userLinks.containsKey(users) && establishment) {
-			status.setStatus(SocialNetworkStatus.Enum.INVALID_USERS);
+		if (userLinks.containsKey(users) && establishment &&
+                userLinks.get(users).isActive(date)) {
+                status.setStatus(SocialNetworkStatus.Enum.INVALID_USERS);
 		}
 
 		if (SocialNetworkStatus.Enum.INVALID_USERS != status.getStatus()) {
@@ -642,6 +625,9 @@ public class SocialNetwork {
 			// Put users in links map when status is successful.
 			putUsersInLinksMap(users, link, status);
 
+            // Add this date to the set of event dates.
+            eventDates.add(date);
+
 		} else {
 			// Check if the user link set contains the link between input users.
 			if (userLinks.containsKey(users)) {
@@ -652,6 +638,9 @@ public class SocialNetwork {
 				} catch (UninitializedObjectException uoe) {
 					assert false : "Unable to tear down link.";
 				}
+
+                // Add this date to the set of event dates.
+                eventDates.add(date);
 			} else {
 				status.setStatus(SocialNetworkStatus.Enum.INVALID_USERS);
 			}
@@ -695,9 +684,10 @@ public class SocialNetwork {
 	 * 
 	 * @throws NullPointerException
 	 *             - thrown when input is null
+     * @throws exceptions.UninitializedObjectException - thrown when link is uninitialized
 	 */
 	public void tearDownLink(Set<String> ids, Date date,
-			SocialNetworkStatus status) throws NullPointerException {
+			SocialNetworkStatus status) throws NullPointerException, UninitializedObjectException {
 		changeLink(ids, date, status, false);
 	}
 

@@ -7,7 +7,7 @@ EECS 293
 
 Shaun Howard - smh150
 
-Project 4: Linked With Social Network 
+Project 5: Linked With Social Network 
 
 A user represents a user of the social network. The user consists of a unique
 identifier to make sure that user is unique in the social network.
@@ -41,3 +41,4 @@ relationships between users.
 
 **Newly added: Status variables implemented for various methods in the social network.
 **Newly added: Can check the neighborhood for friends of a given user!
+**Newly added: Find trends in the neighborhood of a given user with neighborhoodTrend()!
