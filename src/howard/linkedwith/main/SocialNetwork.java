@@ -139,14 +139,37 @@ public class SocialNetwork {
      * @param status - the social network status of the operation
      * @return a map of the sizes of the input user's neighborhood
      * at given dates
+     * @throws exceptions.UninitializedObjectException - thrown when a link
+     * is uninitialized
      */
-    public Map<Date, Integer> neighborhoodTrend(String id, SocialNetworkStatus status) {
+    public Map<Date, Integer> neighborhoodTrend(String id, SocialNetworkStatus status)
+            throws UninitializedObjectException {
         Map<Date, Integer> neighborhoodTrend = new HashMap<>();
+
+        // The key set of the user links map.
+        Set<Set<User>> keySet = userLinks.keySet();
+        List<Link> linkList = new ArrayList<>();
+        Link linkToAdd;
+
         LinkedWithUtilities.setStatusForInvalidUsers(id, userSet, status);
 
-        if (neighborhoodTrends.containsKey(id)
-                && status.getStatus() != SocialNetworkStatus.Enum.INVALID_USERS){
-            neighborhoodTrend = neighborhoodTrends.get(id);
+        /*
+         * Find all links to user, find events of those links,
+         * check neighborhood size upon each date of event,
+         * add size and date to map associated with user.
+         */
+        if(status.getStatus() != SocialNetworkStatus.Enum.INVALID_USERS){
+
+            User user = getUser(id);
+
+            for(Set<User> userSet : keySet){
+                if (userSet.contains(user)){
+                    linkToAdd = userLinks.get(userSet);
+                    linkList.add(linkToAdd);
+                }
+            }
+
+            updateNeighborhoodTrendForUser(id, linkList, status);
             status.setStatus(SocialNetworkStatus.Enum.SUCCESS);
         }
 
@@ -203,38 +226,72 @@ public class SocialNetwork {
 
 		/*
 		 * Add actively linked users to the neighborhood, including the calling user.
-		 * Update the neighborhood trend for this user based on the size of the
-		 * neighborhood at the given date.
 		 */
 		if (status.getStatus() != SocialNetworkStatus.Enum.INVALID_USERS ||
                 status.getStatus() != SocialNetworkStatus.Enum.INVALID_DISTANCE) {
 			neighborhood = buildNeighborhood(getUser(id), date, distance_max);
-            updateNeighborhoodTrendForUser(id, date, neighborhood.size());
 		}
 
 		return neighborhood;
 	}
 
     /**
-     * Updates the neighborhood trend for the given user id by putting the
-     * given date and neighborhood size into the map of the table of
-     * neighborhood trends for this social network.
+     * Updates the neighborhood trend for the given user id by checking
+     * the neighborhood size at the dates of events of links in the
+     * given link list and adding them to the neighborhood trend map.
      *
      * @param id - the unique user id to update the trend for
-     * @param date - the date of the updated trend
-     * @param size - the size of the neighborhood at the given date
+     * @param linkList - the list of links associated directly with the user
+     * @param status - the status of the neighborhood update
      */
-    private void updateNeighborhoodTrendForUser(String id, Date date, int size) {
+    private void updateNeighborhoodTrendForUser(String id, List<Link> linkList,
+                                                SocialNetworkStatus status) throws UninitializedObjectException {
+        Map<Date, Integer> neighborhoodTrend;
+        Set<Date> linkEventDates = new HashSet<>();
+        int neighborhoodSizeAtDate;
+
+        /*
+         * Iterate through the links and the dates of
+         * events of those links, adding to a hash set
+         * to disregard duplicate entries.
+         */
+        for (Link link: linkList){
+            for (Date date : link.getDates()){
+               linkEventDates.add(date);
+            }
+        }
+
+        neighborhoodTrend = getNeighborhoodTrendForUser(id);
+
+        /*
+         * Iterate through dates and put the neighborhood size at that date in
+         * the neighborhood trend for this user.
+         */
+        for (Date date : linkEventDates){
+            neighborhoodSizeAtDate = neighborhood(id, date, status).size();
+            neighborhoodTrend.put(date, neighborhoodSizeAtDate);
+        }
+    }
+
+    /**
+     * Gets the neighborhood trend for the given user id.
+     * Creates one and puts it in the neighborhood trend
+     * map if one does not exist for the given user.
+     *
+     * @param id - the user to get the neighborhood trend of
+     * @return the neighborhood trend map for the user
+     */
+    private Map<Date, Integer> getNeighborhoodTrendForUser(String id) {
         Map<Date, Integer> neighborhoodTrend;
 
         if (neighborhoodTrends.containsKey(id)) {
             neighborhoodTrend = neighborhoodTrends.get(id);
-            neighborhoodTrend.put(date, size);
-        } else {
+        }else {
             neighborhoodTrend = new HashMap<>();
-            neighborhoodTrend.put(date, size);
             neighborhoodTrends.put(id, neighborhoodTrend);
         }
+
+        return neighborhoodTrend;
     }
 
     /**
