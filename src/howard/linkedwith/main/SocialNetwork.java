@@ -6,7 +6,6 @@ package main;
 import java.util.*;
 
 import exceptions.UninitializedObjectException;
-import main.User;
 
 /**
  * Social Network represents the collection of all users in the Linked With
@@ -127,6 +126,21 @@ public class SocialNetwork {
 		return null;
 	}
 
+    /**
+     * Detects the trending users of this social network based on the
+     * dates of when the input user's neighborhood changed and the
+     * size of the user's neighborhood at that time.
+     *
+     * @param id - the id of the user to find the neighborhood trend of
+     * @param status - the social network status of the operation
+     * @return a map of the sizes of the input user's neighborhood
+     * at given dates
+     */
+    public Map<Date, Integer> neighborhoodTrend(String id, SocialNetworkStatus status) {
+        Map<Date, Integer> neighborhoodTrend = new HashMap<>();
+        return neighborhoodTrend;
+    }
+
 	/**
 	 * Returns all of the users through the social network that are directly or
 	 * indirectly associated with the user of the given id as well as the
@@ -184,7 +198,7 @@ public class SocialNetwork {
 	}
 
     /**
-     * Gets the direct links to the given user.
+     * Gets the direct links (with distance 1) to the given user.
      *
      * @param user - the user to find the direct links to
      * @param keySet - the key set of the map of user links for the
@@ -210,8 +224,10 @@ public class SocialNetwork {
         }
 
         /*
-         * Remove all the sets to remove from the user link's map key set so
-         * they are not processed again.
+         * Remove all the user sets in the list of sets to remove
+         * from the key set of the link map so
+         * they are not processed again in the neighborhood
+         * method.
          */
         for (Set<User> userSet : setsToRemove) {
             if (keySet.contains(userSet)) {
@@ -223,8 +239,8 @@ public class SocialNetwork {
     }
 
     /**
-     * Gets the users directly linked to the given user based on the
-     * given list of direct links to the user.
+     * Gets the users directly linked (at a distance of 1) to the given
+     * user based on the given list of direct links to the user.
      *
      * @param user - the user to find the users closest to
      * @param linksToUser - the direct links to the user
@@ -237,16 +253,16 @@ public class SocialNetwork {
         List<User> linkedUsers = new ArrayList<>();
 
         /*
-         * For each link in the links to this user, add the set of users associated in the
-         * link to the list of sets of linked users.
+         * For each link in the direct links to this user, add the set
+         * of users associated in the link to the list of sets of linked users.
          */
         for (Link link : linksToUser){
             setsOfLinkedUsers.add(link.getUsers());
         }
 
         /*
-         * For each set of users associated with a link, remove this user and
-         * add the other user to a list of users linked to this user.
+         * For each set of users associated with a link, remove this user
+         * from the set and add the other user to a list of users linked to this user.
          */
         for (Set<User> userSet : setsOfLinkedUsers){
             userSet.remove(user);
@@ -266,7 +282,7 @@ public class SocialNetwork {
      */
     private Set<Friend> buildNeighborhood(User user, int distance_max) throws UninitializedObjectException {
 
-        // Get the key set of the user links map.
+        // A copy of the key set of the user links map.
         Set<Set<User>> keySet = new HashSet<>();
         keySet.addAll(userLinks.keySet());
 
@@ -278,23 +294,27 @@ public class SocialNetwork {
         //Set of users directly connected to the given user.
         Set<User> connectedUsers = new HashSet<>();
 
-        //Add this calling user to the neighborhood.
+        //Add this calling user to the neighborhood at distance 0.
         addUserToNeighborhood(user, neighborhood, distance);
 
         //Add the calling user to the set of connected users.
         connectedUsers.add(user);
 
+        //Make a method that adds user to neighborhood and to the connected users list.
+
         distance++;
 
-        //Find users associated to this user.
+        //Find users associated to this user and add them to the neighborhood.
         while (!connectedUsers.isEmpty()) {
 
             if (distance > distance_max) {
                 return neighborhood;
             }
 
-            //Add all the users linked to this user at the current distance
-            //to the neighborhood.
+            /*
+             * Add all the users linked to this user at the current distance
+             * to the neighborhood.
+             */
             addUsersToNeighborhood(distance, connectedUsers, neighborhood, keySet);
 
             distance++;
@@ -308,7 +328,7 @@ public class SocialNetwork {
      * to the set of friends based on the given key set of the user links map
      * for this social network.
      *
-     * @param distance - the distance of the current
+     * @param distance - the distance of the current friend search
      * @param connectedUsers - the users connected in the neighborhood at the
      *                       given distance from the initial user
      * @param neighborhood - the friend set of the neighborhood for the initial
@@ -324,7 +344,7 @@ public class SocialNetwork {
 
         List<User> linkedUsers;
 
-        //Set for iterating over.
+        //Set of connected users for iterating over.
         Set<User> tempUsers = new HashSet<>();
         tempUsers.addAll(connectedUsers);
 
@@ -332,9 +352,12 @@ public class SocialNetwork {
 
         User currUser;
 
-        //Determine all the users connected at the given distance,
-        //add them to the neighborhood, and add to the set of connected
-        //users for further association searching.
+        /*
+         * Determine all the users connected at the given distance,
+         * add them to the neighborhood, and add to the set of connected
+         * users for further searching friend associations at a greater
+         * distance.
+         */
         while(userIter.hasNext()) {
             currUser = userIter.next();
 
@@ -342,12 +365,16 @@ public class SocialNetwork {
             linksToUser = getLinksToUser(currUser, keySet);
             linkedUsers = getLinkedUsers(currUser, linksToUser);
 
-            //Remove the current user from the set of connected users
-            //so they are not processed again.
+            /*
+             * Remove the current user from the set of connected users
+             * so they are not processed again.
+             */
             connectedUsers.remove(currUser);
 
-            //Add the users connected to the current user to the
-            //neighborhood of friends.
+            /*
+             * Add the users connected to the current user to the
+             * neighborhood of friends.
+             */
             if (!linkedUsers.isEmpty()) {
                 for (User linkedUser : linkedUsers) {
                     addUserToNeighborhood(linkedUser, neighborhood, distance);
@@ -359,12 +386,12 @@ public class SocialNetwork {
     }
 
 	/**
-	 * Adds the given user to the neighborhood at the given distance.
+	 * Adds the given user to the neighborhood as a friend at the given distance.
 	 * 
 	 * @param user
 	 *            - user to add to the neighborhood
 	 * @param neighborhood
-	 *            - the neighborhood to add the user to
+	 *            - the neighborhood to add the user to as a friend
 	 * @param distance
 	 *            - the distance of this friend
 	 */
@@ -405,7 +432,7 @@ public class SocialNetwork {
 	 * @param date
 	 *            - date of the change
 	 * @param status
-	 *            - status of the operation
+	 *            - the status of the social network operation
 	 * @param establishment
 	 *            - whether establishing link
 	 */
@@ -441,7 +468,7 @@ public class SocialNetwork {
 	 * @param users
 	 *            - the users in the link
 	 * @param link
-	 *            - the link
+	 *            - the link to change
 	 * @param date
 	 *            - date of link change
 	 * @param status
@@ -453,12 +480,16 @@ public class SocialNetwork {
 		// If users were invalid, do nothing, otherwise establish the link.
 		if (establishment) {
 
-			// Set the users in the link to the created user set from input id
-			// set.
+			/*
+			 * Set the users in the link to the created user set from input id
+			 * set.
+			 */
 			link.setUsers(users, status);
 
-			// Attempt to establish a link at the given date between the input
-			// users.
+			/*
+			 * Attempt to establish a link at the given date between the input
+			 * users.
+			 */
 			try {
 				link.establish(date, status);
 			} catch (UninitializedObjectException uoe) {
@@ -467,6 +498,7 @@ public class SocialNetwork {
 
 			// Put users in links map when status is successful.
 			putUsersInLinksMap(users, link, status);
+
 		} else {
 			// Check if the user link set contains the link between input users.
 			if (userLinks.containsKey(users)) {
@@ -493,7 +525,7 @@ public class SocialNetwork {
 	 * @param link
 	 *            - the link between the users
 	 * @param status
-	 *            - the status of the social network until now
+	 *            - the status of the social network at this point
 	 */
 	private void putUsersInLinksMap(Set<User> users, Link link,
 			SocialNetworkStatus status) {
@@ -563,8 +595,10 @@ public class SocialNetwork {
 		// Check if the map of user links contains a link between these users.
 		if (userLinks.containsKey(users)) {
 
-			// Attempt to determine if the user link is active at the given
-			// date.
+			/*
+			 * Attempt to determine if the user link is active at the given
+			 * date.
+			 */
 			try {
 				return userLinks.get(users).isActive(date);
 			} catch (UninitializedObjectException uoe) {

@@ -15,10 +15,11 @@ import exceptions.UninitializedObjectException;
 public class LinkedWithUtilities {
 
 	/**
-	 * Throws an uninitialized object exception when this friend is invalid.
+	 * Throws an uninitialized object exception when input
+     * is invalid.
 	 * 
 	 * @throws UninitializedObjectException
-	 *             - thrown when this friend is invalid
+	 *             - thrown when the input is false
 	 */
 	static void throwExceptionWhenInvalid(boolean isValid)
 			throws UninitializedObjectException {
@@ -28,10 +29,10 @@ public class LinkedWithUtilities {
 	}
 
 	/**
-	 * Throws a null pointer exception when any of the input objects is null.
+	 * Throws a null pointer exception when any of the input objects are null.
 	 * 
 	 * @param objs
-	 *            - the objects to check for nullness
+	 *            - the objects to check for null
 	 * @throws NullPointerException
 	 *             - thrown when any of the input objects is null
 	 */

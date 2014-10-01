@@ -117,7 +117,7 @@ public class Link {
 	 */
 	public void establish(Date date, SocialNetworkStatus status)
 			throws NullPointerException, UninitializedObjectException {
-		changeLink(date, status, true);
+		changeLink(date, true, status);
 	}
 
 	/**
@@ -142,7 +142,7 @@ public class Link {
 		 * Check whether the last date in the list of dates was a tear down date
 		 * and that the input date does not precede the last date in the list.
 		 */
-		return checkForTearDownAndSucceedingDate(date);
+		return checkTearDownAndSucceedingDate(date);
 	}
 
 	/**
@@ -155,7 +155,7 @@ public class Link {
 	 * @return whether the last date in the list was a tear down date and that
 	 *         the input date does not precede the last date in the list
 	 */
-	private boolean checkForTearDownAndSucceedingDate(Date date) {
+	private boolean checkTearDownAndSucceedingDate(Date date) {
 		return dates.size() % 2 == 0
 				&& !date.before(dates.get(dates.size() - 1));
 	}
@@ -176,7 +176,7 @@ public class Link {
 	 */
 	public void tearDown(Date date, SocialNetworkStatus status)
 			throws NullPointerException, UninitializedObjectException {
-		changeLink(date, status, false);
+		changeLink(date, false, status);
 	}
 
 	/**
@@ -188,8 +188,8 @@ public class Link {
 	 * @param status
 	 *            - the status of the social network
 	 */
-	private void setDatePrecedesLastOnRecord(Date date,
-			SocialNetworkStatus status) {
+	private void setInvalidDateStatus(Date date,
+                                      SocialNetworkStatus status) {
 		if (dates.size() > 1 && date.before(dates.get(dates.size() - 1))) {
 			status.setStatus(SocialNetworkStatus.Enum.INVALID_DATE);
 		}
@@ -298,7 +298,7 @@ public class Link {
 				&& isTearDownDate(dateInList))) {
 			return true;
 		}
-		else if (establishmentDateAndEqualToDateInList(dateToCheck, dateInList)) {
+		else if (isEstablishmentDateEqualToDateInList(dateToCheck, dateInList)) {
 			return true;
 		}
 
@@ -317,8 +317,8 @@ public class Link {
 	 * @return whether the date to check is equal to the date in the list and if
 	 *         that date is an establishment date
 	 */
-	private boolean establishmentDateAndEqualToDateInList(Date dateToCheck,
-			Date dateInList) {
+	private boolean isEstablishmentDateEqualToDateInList(Date dateToCheck,
+                                                         Date dateInList) {
 		return dateToCheck.equals(dateInList)
 				&& isEstablishmentDate(dateInList);
 	}
@@ -328,14 +328,14 @@ public class Link {
 	 * 
 	 * @param dateToCheck
 	 *            - the date to check for activity
-	 * @param dateInList
+	 * @param lastDate
 	 *            - the last date in date list
 	 * 
 	 * @return whether the date to check is active after the last date in the
 	 *         list
 	 */
-	private boolean isActiveAfterLastDate(Date dateToCheck, Date dateInList) {
-		return dateToCheck.after(dateInList) && isEstablishmentDate(dateInList);
+	private boolean isActiveAfterLastDate(Date dateToCheck, Date lastDate) {
+		return dateToCheck.after(lastDate) && isEstablishmentDate(lastDate);
 	}
 
 	/**
@@ -448,7 +448,8 @@ public class Link {
 
 	/**
 	 * Sets the link activity status based on if establishment or tear down.
-	 * 
+	 *
+     * @param isActive - whether the link is currently active
 	 * @param status
 	 *            - the status to change based on activity
 	 * @param establishment - if link is trying to be established
@@ -472,20 +473,19 @@ public class Link {
 	 * 
 	 * @param date
 	 *            - date to change link at
-	 * @param status
-	 *            - the status of the operation
 	 * @param establishment
 	 *            - if the link is being established
+	 * @param status
+	 *            - the status of the operation
 	 * @throws NullPointerException
 	 *             - thrown when input null
 	 * @throws UninitializedObjectException
 	 *             - thrown when link invalid
 	 */
-	private void changeLink(Date date, SocialNetworkStatus status,
-			boolean establishment) throws NullPointerException,
-			UninitializedObjectException {
+	private void changeLink(Date date, boolean establishment, SocialNetworkStatus status)
+            throws NullPointerException, UninitializedObjectException {
 
-		if (linkChangeIsValid(date, status, establishment)) {
+		if (linkChangeIsValid(date, establishment, status)) {
 			dates.add(date);
 			status.setStatus(SocialNetworkStatus.Enum.SUCCESS);
 		}
@@ -496,26 +496,25 @@ public class Link {
 	 * 
 	 * @param date
 	 *            - date to change link at
-	 * @param status
-	 *            - the status of the operation
 	 * @param establishment
 	 *            - if the link is being established
+	 * @param status
+	 *            - the status of the operation
 	 * @throws NullPointerException
 	 *             - thrown when input null
 	 * @throws UninitializedObjectException
 	 *             - thrown when link invalid
 	 */
-	private boolean linkChangeIsValid(Date date, SocialNetworkStatus status,
-			boolean establishment) throws NullPointerException,
-			UninitializedObjectException {
+	private boolean linkChangeIsValid(Date date, boolean establishment, SocialNetworkStatus status)
+            throws NullPointerException, UninitializedObjectException {
 		boolean linkChanged = false;
 
 		LinkedWithUtilities.throwExceptionWhenNull(date, status);
 		LinkedWithUtilities.throwExceptionWhenInvalid(isValid());
-		setDatePrecedesLastOnRecord(date, status);
+		setInvalidDateStatus(date, status);
 
 		if (status.getStatus() != SocialNetworkStatus.Enum.INVALID_DATE) {
-			if (!linkAlreadyInState(date, status, establishment)) {
+			if (!linkAlreadyInState(date, establishment, status)) {
 				linkChanged = manageLink(date, establishment);
 			}
 		}
@@ -524,7 +523,7 @@ public class Link {
 	}
 
 	/**
-	 * Manages the change to the link. Returns true if op completed
+	 * Manages the change to the link. Returns true if operation completed
 	 * successfully.
 	 * 
 	 * @param date
@@ -548,19 +547,18 @@ public class Link {
 	 * 
 	 * @param date
 	 *            - the date to check the link at
-	 * @param status
-	 *            - the status of this operation
 	 * @param establishment
 	 *            - whether the link is trying to establish
+	 * @param status
+	 *            - the status of this operation
 	 * @return if the link is already in the desired state
 	 * @throws NullPointerException
 	 *             - thrown when input is null
 	 * @throws UninitializedObjectException
 	 *             - thrown when link is invalid
 	 */
-	private boolean linkAlreadyInState(Date date, SocialNetworkStatus status,
-			boolean establishment) throws NullPointerException,
-			UninitializedObjectException {
+	private boolean linkAlreadyInState(Date date, boolean establishment, SocialNetworkStatus status)
+            throws NullPointerException, UninitializedObjectException {
 		boolean linkInState = false;
 		boolean isActive = isActive(date);
 

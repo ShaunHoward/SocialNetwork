@@ -72,7 +72,16 @@ public class Friend {
 		LinkedWithUtilities.throwExceptionWhenInvalid(isValid);
 		return this.distance;
 	}
-	
+
+    /**
+     * Converts this friend to a readable string by the user ID and distance of
+     * the friend.
+     *
+     * Overrides the toString() method of Object.
+     *
+     * @return the string representation of this friend
+     */
+    @Override
 	public String toString() {
 		if (!isValid){
 			return "Invalid Friend";
@@ -85,6 +94,8 @@ public class Friend {
      * Override the equals method of Object for this Friend implementation.
      * Compares two friends by their user objects. Returns true if two user objects
      * are equivalent.
+     *
+     * @param object - the object to compare to this object
      */
     @Override
     public boolean equals(Object object) {

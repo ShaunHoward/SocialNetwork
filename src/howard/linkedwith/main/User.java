@@ -184,7 +184,7 @@ public class User {
 	 * the user. Throws an exception if the input email is null or the user is
 	 * invalid.
 	 * 
-	 * @param name
+	 * @param email
 	 *            - the email to set
 	 * 
 	 * @return the current user with new email
@@ -217,8 +217,8 @@ public class User {
 	 * previously stored for the user. Throws an exception if the input number
 	 * is null or the user is invalid.
 	 * 
-	 * @param number
-	 *            - the number to set
+	 * @param phone
+	 *            - the phone number to set
 	 * 
 	 * @return the current user with new number
 	 * 
