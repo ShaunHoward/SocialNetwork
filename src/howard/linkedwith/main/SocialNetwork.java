@@ -246,9 +246,11 @@ public class SocialNetwork {
          * the neighborhood trend for this user.
          */
         for (Date date : eventDates){
-            neighborhoodAtDate = neighborhood(id, date, status);
-            neighborhoodSizeAtDate = neighborhoodAtDate.size();
-            neighborhoodTrend.put(date, neighborhoodSizeAtDate);
+            if (!neighborhoodTrend.containsKey(date)) {
+                neighborhoodAtDate = neighborhood(id, date, status);
+                neighborhoodSizeAtDate = neighborhoodAtDate.size();
+                neighborhoodTrend.put(date, neighborhoodSizeAtDate);
+            }
         }
     }
 
@@ -314,11 +316,7 @@ public class SocialNetwork {
          * they are not processed again in the neighborhood
          * method.
          */
-        for (Set<User> userSet : setsToRemove) {
-            if (keySet.contains(userSet)) {
-                keySet.remove(userSet);
-            }
-        }
+        keySet.removeAll(setsToRemove);
 
         return linksToUser;
     }
