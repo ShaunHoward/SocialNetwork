@@ -21,12 +21,16 @@ public class SocialNetwork {
 	// Map of links between sets of users in the social network.
 	Map<Set<User>, Link> userLinks;
 
+    // Table of the neighborhood trends for each unique user id.
+    Hashtable<String, Map<Date, Integer>> neighborhoodTrends;
+
 	/**
 	 * Constructor to create a social network without any users.
 	 */
 	public SocialNetwork() {
-		this.userSet = new HashSet<User>();
-		this.userLinks = new HashMap<Set<User>, Link>();
+		this.userSet = new HashSet<>();
+		this.userLinks = new HashMap<>();
+        this.neighborhoodTrends = new Hashtable<>();
 	}
 
 	/**
@@ -138,6 +142,14 @@ public class SocialNetwork {
      */
     public Map<Date, Integer> neighborhoodTrend(String id, SocialNetworkStatus status) {
         Map<Date, Integer> neighborhoodTrend = new HashMap<>();
+        LinkedWithUtilities.setStatusForInvalidUsers(id, userSet, status);
+
+        if (neighborhoodTrends.containsKey(id)
+                && status.getStatus() != SocialNetworkStatus.Enum.INVALID_USERS){
+            neighborhoodTrend = neighborhoodTrends.get(id);
+            status.setStatus(SocialNetworkStatus.Enum.SUCCESS);
+        }
+
         return neighborhoodTrend;
     }
 
@@ -164,9 +176,9 @@ public class SocialNetwork {
 	}
 
 	/**
-	 * Returns all of the users through the social network that are directly or
-	 * indirectly associated with the user of the given id as well as the
-	 * distance from the initial user.
+	 * Returns all of the users actively linked through the social network at the given date
+     * that are directly or indirectly associated with the user of the given id in the range of
+     * the given maximum distance from the initial user.
 	 * 
 	 * @param id
 	 *            - the user to get the friends of
@@ -187,27 +199,62 @@ public class SocialNetwork {
 		LinkedWithUtilities.throwExceptionWhenNull(id, date, status);
 		LinkedWithUtilities.setStatusForInvalidUsers(id, userSet, status);
         LinkedWithUtilities.setStatusForNegativeDistance(distance_max, status);
+        Set<Friend> neighborhood = new HashSet<>();
 
-		// Add users to friend set, including the calling user.
+		/*
+		 * Add actively linked users to the neighborhood, including the calling user.
+		 * Update the neighborhood trend for this user based on the size of the
+		 * neighborhood at the given date.
+		 */
 		if (status.getStatus() != SocialNetworkStatus.Enum.INVALID_USERS ||
                 status.getStatus() != SocialNetworkStatus.Enum.INVALID_DISTANCE) {
-			return buildNeighborhood(getUser(id), distance_max);
+			neighborhood = buildNeighborhood(getUser(id), date, distance_max);
+            updateNeighborhoodTrendForUser(id, date, neighborhood.size());
 		}
 
-		return new HashSet<Friend>();
+		return neighborhood;
 	}
 
     /**
-     * Gets the direct links (with distance 1) to the given user.
+     * Updates the neighborhood trend for the given user id by putting the
+     * given date and neighborhood size into the map of the table of
+     * neighborhood trends for this social network.
+     *
+     * @param id - the unique user id to update the trend for
+     * @param date - the date of the updated trend
+     * @param size - the size of the neighborhood at the given date
+     */
+    private void updateNeighborhoodTrendForUser(String id, Date date, int size) {
+        Map<Date, Integer> neighborhoodTrend;
+
+        if (neighborhoodTrends.containsKey(id)) {
+            neighborhoodTrend = neighborhoodTrends.get(id);
+            neighborhoodTrend.put(date, size);
+        } else {
+            neighborhoodTrend = new HashMap<>();
+            neighborhoodTrend.put(date, size);
+            neighborhoodTrends.put(id, neighborhoodTrend);
+        }
+    }
+
+    /**
+     * Gets the direct links (with distance 1) to the given user
+     * which are active at the given date.
      *
      * @param user - the user to find the direct links to
+     * @param date - the date to check for link activity on between this user
+     *             and other users associated with this user
      * @param keySet - the key set of the map of user links for the
      *               social network
      * @return a list of direct links to the given user
+     * @throws exceptions.UninitializedObjectException - thrown when a link is
+     * uninitialized
      */
-    private List<Link> getLinksToUser(User user, Set<Set<User>> keySet) {
+    private List<Link> getActiveLinksToUser(User user, Date date, Set<Set<User>> keySet)
+            throws UninitializedObjectException {
         List<Link> linksToUser = new ArrayList<>();
         List<Set<User>> setsToRemove = new ArrayList<>();
+        Link linkToAdd = null;
 
         /*
          * Gather all the links to this user by finding each set the
@@ -218,7 +265,8 @@ public class SocialNetwork {
          */
         for (Set<User> userSet : keySet) {
             if (userSet.contains(user)) {
-                linksToUser.add(userLinks.get(userSet));
+                linkToAdd = userLinks.get(userSet);
+                addActiveLinkToSet(date, linkToAdd, linksToUser);
                 setsToRemove.add(userSet);
             }
         }
@@ -236,6 +284,24 @@ public class SocialNetwork {
         }
 
         return linksToUser;
+    }
+
+    /**
+     * Adds an active link to the given set of links.
+     * When a link is inactive, nothing happens.
+     *
+     * @param date - date to check link activity on
+     * @param linkToAdd - link to add to the set if active on the given
+     *                  date
+     * @param links - set of links to add a link to
+     * @throws exceptions.UninitializedObjectException - thrown when a link is
+     * uninitialized
+     */
+    private void addActiveLinkToSet(Date date, Link linkToAdd, List<Link> links)
+            throws UninitializedObjectException {
+        if (linkToAdd.isActive(date)) {
+            links.add(linkToAdd);
+        }
     }
 
     /**
@@ -273,14 +339,18 @@ public class SocialNetwork {
     }
 
     /**
-     * Builds the neighborhood of the given user to the extent of the max distance given.
+     * Builds the neighborhood of the given user to the extent of the max distance given
+     * and based on the link activity on the given date.
      *
      * @param user - the user to build the neighborhood of
+     * @param date - the date to build the neighborhood on,
+     *             which only considers active links between users
      * @param distance_max - the max distance to build the neighborhood to
      * @return the set of friends in the neighborhood
      * @throws UninitializedObjectException - thrown when a link is uninitialized
      */
-    private Set<Friend> buildNeighborhood(User user, int distance_max) throws UninitializedObjectException {
+    private Set<Friend> buildNeighborhood(User user, Date date, int distance_max)
+            throws UninitializedObjectException {
 
         // A copy of the key set of the user links map.
         Set<Set<User>> keySet = new HashSet<>();
@@ -313,9 +383,9 @@ public class SocialNetwork {
 
             /*
              * Add all the users linked to this user at the current distance
-             * to the neighborhood.
+             * and active at the current date to the neighborhood.
              */
-            addUsersToNeighborhood(distance, connectedUsers, neighborhood, keySet);
+            addUsersToNeighborhood(date, distance, connectedUsers, neighborhood, keySet);
 
             distance++;
         }
@@ -326,8 +396,11 @@ public class SocialNetwork {
     /**
      * Adds all the users connected in the neighborhood at the given distance
      * to the set of friends based on the given key set of the user links map
-     * for this social network.
+     * for this social network. Only links active at the given date are
+     * considered in the neighborhood.
      *
+     * @param date - the date of the neighborhood construction, which
+     *             only considers active links between users
      * @param distance - the distance of the current friend search
      * @param connectedUsers - the users connected in the neighborhood at the
      *                       given distance from the initial user
@@ -336,7 +409,7 @@ public class SocialNetwork {
      * @param keySet - the key set of the user links map in this social network
      * @throws UninitializedObjectException - thrown when a link is uninitialized
      */
-    private void addUsersToNeighborhood(int distance, Set<User> connectedUsers,
+    private void addUsersToNeighborhood(Date date, int distance, Set<User> connectedUsers,
                                         Set<Friend> neighborhood, Set<Set<User>> keySet)
             throws UninitializedObjectException {
 
@@ -362,7 +435,7 @@ public class SocialNetwork {
             currUser = userIter.next();
 
             //Find the users linked directly to the current user.
-            linksToUser = getLinksToUser(currUser, keySet);
+            linksToUser = getActiveLinksToUser(currUser, date, keySet);
             linkedUsers = getLinkedUsers(currUser, linksToUser);
 
             /*

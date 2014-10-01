@@ -211,6 +211,108 @@ public class TestSocialNetwork {
         testNetwork.establishLink(userIds3, date1, status);
         testNetwork.establishLink(userIds4, date1, status);
 
+
+        try {
+            actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
+        } catch (UninitializedObjectException e) {
+        }
+
+        assertEquals(expectedSet, actualSet);
+        assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+    }
+
+    @Test
+    public void testInactiveLinksNeighborhoodSmall() {
+        Set<Friend> expectedSet = new HashSet<>();
+        Set<Friend> actualSet = null;
+
+        Friend friend1 = new Friend();
+        friend1.set(user1, 0);
+        expectedSet.add(friend1);
+
+        Friend friend2 = new Friend();
+        friend2.set(user2, 1);
+
+        Friend friend3 = new Friend();
+        friend3.set(user3, 2);
+
+        testNetwork.addUser(user1);
+        testNetwork.addUser(user2);
+        testNetwork.addUser(user3);
+
+        Set<String> userIds1 = new HashSet<String>();
+        Set<String> userIds2 = new HashSet<String>();
+        userIds1.add(user1.getID());
+        userIds1.add(user2.getID());
+        userIds2.add(user2.getID());
+        userIds2.add(user3.getID());
+
+        testNetwork.establishLink(userIds1,  date1, status);
+
+        testNetwork.tearDownLink(userIds1, date2, status);
+
+        testNetwork.establishLink(userIds2, date1, status);
+
+        try {
+            actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
+        } catch (UninitializedObjectException e) {
+        }
+
+        assertEquals(expectedSet, actualSet);
+        assertEquals(SocialNetworkStatus.Enum.SUCCESS, status.getStatus());
+    }
+
+    @Test
+    public void testInactiveLinksNeighborhoodMedium() {
+        Set<Friend> expectedSet = new HashSet<>();
+        Set<Friend> actualSet = null;
+
+        Friend friend1 = new Friend();
+        friend1.set(user1, 0);
+        expectedSet.add(friend1);
+
+        Friend friend2 = new Friend();
+        friend2.set(user2, 1);
+        expectedSet.add(friend2);
+
+        Friend friend3 = new Friend();
+        friend3.set(user3, 2);
+        expectedSet.add(friend3);
+
+        Friend friend4 = new Friend();
+        friend4.set(user4, 2);
+
+        Friend friend5 = new Friend();
+        friend5.set(user5, 3);
+
+        testNetwork.addUser(user1);
+        testNetwork.addUser(user2);
+        testNetwork.addUser(user3);
+        testNetwork.addUser(user4);
+        testNetwork.addUser(user5);
+
+        Set<String> userIds1 = new HashSet<String>();
+        userIds1.add(user1.getID());
+        userIds1.add(user2.getID());
+        Set<String> userIds2 = new HashSet<String>();
+        userIds2.add(user2.getID());
+        userIds2.add(user3.getID());
+        Set<String> userIds3 = new HashSet<String>();
+        userIds3.add(user2.getID());
+        userIds3.add(user4.getID());
+        Set<String> userIds4 = new HashSet<String>();
+        userIds4.add(user4.getID());
+        userIds4.add(user5.getID());
+
+        testNetwork.establishLink(userIds1,  date1, status);
+        testNetwork.establishLink(userIds2, date1, status);
+        testNetwork.establishLink(userIds3, date1, status);
+
+        testNetwork.tearDownLink(userIds3, date2, status);
+
+        testNetwork.establishLink(userIds4, date1, status);
+
+
         try {
             actualSet = testNetwork.neighborhood(user1.getID(), date2, status);
         } catch (UninitializedObjectException e) {

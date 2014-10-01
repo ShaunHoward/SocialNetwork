@@ -117,7 +117,7 @@ public class Link {
 	 */
 	public void establish(Date date, SocialNetworkStatus status)
 			throws NullPointerException, UninitializedObjectException {
-		changeLink(date, true, status);
+		changeLinkOnDate(date, true, status);
 	}
 
 	/**
@@ -176,7 +176,7 @@ public class Link {
 	 */
 	public void tearDown(Date date, SocialNetworkStatus status)
 			throws NullPointerException, UninitializedObjectException {
-		changeLink(date, false, status);
+		changeLinkOnDate(date, false, status);
 	}
 
 	/**
@@ -469,10 +469,10 @@ public class Link {
 	}
 
 	/**
-	 * Changes the link based on input parameters.
+	 * Changes the link on the specified date based on input parameters.
 	 * 
 	 * @param date
-	 *            - date to change link at
+	 *            - date to change link on
 	 * @param establishment
 	 *            - if the link is being established
 	 * @param status
@@ -482,7 +482,7 @@ public class Link {
 	 * @throws UninitializedObjectException
 	 *             - thrown when link invalid
 	 */
-	private void changeLink(Date date, boolean establishment, SocialNetworkStatus status)
+	private void changeLinkOnDate(Date date, boolean establishment, SocialNetworkStatus status)
             throws NullPointerException, UninitializedObjectException {
 
 		if (linkChangeIsValid(date, establishment, status)) {
@@ -507,7 +507,7 @@ public class Link {
 	 */
 	private boolean linkChangeIsValid(Date date, boolean establishment, SocialNetworkStatus status)
             throws NullPointerException, UninitializedObjectException {
-		boolean linkChanged = false;
+		boolean linkChangeIsValid = false;
 
 		LinkedWithUtilities.throwExceptionWhenNull(date, status);
 		LinkedWithUtilities.throwExceptionWhenInvalid(isValid());
@@ -515,23 +515,24 @@ public class Link {
 
 		if (status.getStatus() != SocialNetworkStatus.Enum.INVALID_DATE) {
 			if (!linkAlreadyInState(date, establishment, status)) {
-				linkChanged = manageLink(date, establishment);
+				linkChangeIsValid = verifyAcceptableLinkChange(date, establishment);
 			}
 		}
 
-		return linkChanged;
+		return linkChangeIsValid;
 	}
 
 	/**
-	 * Manages the change to the link. Returns true if operation completed
+	 * Verifies if the link change is acceptable for the type of change
+     * and the date to change on. Returns true if operation completed
 	 * successfully.
 	 * 
 	 * @param date
-	 *            - the date to check
+	 *            - the date to check for acceptable change
 	 * @param establishment - whether the link is trying to establish
 	 * @return whether the link can be changed based on current state
 	 */
-	private boolean manageLink(Date date, boolean establishment) {
+	private boolean verifyAcceptableLinkChange(Date date, boolean establishment) {
 
 		if (establishment && isAcceptableEstablishmentDate(date)) {
 			return true;
@@ -559,16 +560,16 @@ public class Link {
 	 */
 	private boolean linkAlreadyInState(Date date, boolean establishment, SocialNetworkStatus status)
             throws NullPointerException, UninitializedObjectException {
-		boolean linkInState = false;
+		boolean linkAlreadyInState = false;
 		boolean isActive = isActive(date);
 
 		// Check link in given state already.
 		if ((establishment && isActive)
 				|| (!establishment && !isActive)) {
-			linkInState = true;
+			linkAlreadyInState = true;
 			setLinkActivityStatus(isActive, status, establishment);
 		}
-		return linkInState;
+		return linkAlreadyInState;
 	}
 
 	/**
